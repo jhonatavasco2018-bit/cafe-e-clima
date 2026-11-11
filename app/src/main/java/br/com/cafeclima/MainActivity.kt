@@ -27,7 +27,7 @@ class MainActivity : Activity() {
     private val green = Color.rgb(38, 91, 57)
     private val dark = Color.rgb(34, 48, 39)
     private val muted = Color.rgb(104, 119, 108)
-    private val background = Color.rgb(242, 246, 239)
+    private val pageBackground = Color.rgb(242, 246, 239)
     private lateinit var content: LinearLayout
     private lateinit var quoteStatus: TextView
     private lateinit var weatherStatus: TextView
@@ -73,7 +73,7 @@ class MainActivity : Activity() {
     }
 
     private fun buildScreen() {
-        val scroll = ScrollView(this).apply { setBackgroundColor(background) }
+        val scroll = ScrollView(this).apply { setBackgroundColor(pageBackground) }
         content = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(18), dp(20), dp(18), dp(28))
