@@ -169,7 +169,7 @@ class MainActivity : Activity() {
                     if (arabica != null && conilon != null) {
                         quoteArabica.text = "Arábica  R$ $arabica"
                         quoteConilon.text = "Conilon  R$ $conilon"
-                        quoteStatus.text = "Consulta realizada: \${update ?: "horário não informado"}"
+                        quoteStatus.text = "Consulta realizada: ${update ?: "horário não informado"}"
                     } else {
                         quoteArabica.text = "Arábica: indisponível"
                         quoteConilon.text = "Conilon: indisponível"
@@ -270,15 +270,15 @@ class MainActivity : Activity() {
                         SimpleDateFormat("EEE dd/MM", Locale("pt", "BR")).format(parsed!!)
                     } catch (_: Exception) { dateRaw }
                     val desc = weatherDescription(codes.getInt(i))
-                    days.append("☀  $date   \${mins.getDouble(i).toInt()}° / \${maxs.getDouble(i).toInt()}°\n")
-                    days.append("    $desc  •  Chuva: \${probs.optInt(i)}%  •  \${sums.getDouble(i).toInt()} mm\n")
+                    days.append("☀  $date   ${mins.getDouble(i).toInt()}° / ${maxs.getDouble(i).toInt()}°\n")
+                    days.append("    $desc  •  Chuva: ${probs.optInt(i)}%  •  ${sums.getDouble(i).toInt()} mm\n")
                     if (i < times.length() - 1) days.append("\n")
                 }
                 runOnUiThread {
-                    weatherStatus.text = "Previsão para sua posição • \${"%.4f".format(Locale.US, latitude)}, \${"%.4f".format(Locale.US, longitude)}"
-                    currentWeather.text = "\${weatherEmoji(code)}  $temp°C  •  \${weatherDescription(code)}\n" +
+                    weatherStatus.text = "Previsão para sua posição • ${"%.4f".format(Locale.US, latitude)}, ${"%.4f".format(Locale.US, longitude)}"
+                    currentWeather.text = "${weatherEmoji(code)}  $temp°C  •  ${weatherDescription(code)}\n" +
                         "Sensação: $feels°C   |   Umidade: $humidity%\n" +
-                        "Vento: $wind km/h   |   Chuva agora: \${"%.1f".format(Locale("pt", "BR"), rainNow)} mm"
+                        "Vento: $wind km/h   |   Chuva agora: ${"%.1f".format(Locale("pt", "BR"), rainNow)} mm"
                     forecastBox.removeAllViews()
                     forecastBox.addView(text(days.toString().trim(), 14f, dark))
                 }
