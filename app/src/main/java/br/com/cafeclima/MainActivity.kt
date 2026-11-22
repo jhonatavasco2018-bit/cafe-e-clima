@@ -34,6 +34,7 @@ class MainActivity : Activity() {
     private lateinit var currentWeather: TextView
     private lateinit var forecastBox: LinearLayout
     private lateinit var quoteArabica: TextView
+    private lateinit var quoteArabicaRio: TextView
     private lateinit var quoteConilon: TextView
     private lateinit var quoteUpdated: TextView
     private var locationManager: LocationManager? = null
@@ -93,11 +94,13 @@ class MainActivity : Activity() {
         quoteCard.addView(text("Indicadores nacionais • saca de 60 kg", 12f, muted).apply {
             setPadding(0, dp(4), 0, dp(12))
         })
-        quoteArabica = text("Arábica: consultando…", 20f, dark, true)
-        quoteConilon = text("Conilon: consultando…", 20f, dark, true)
+        quoteArabica = text("Arábica • bebida dura: consultando…", 17f, dark, true)
+        quoteArabicaRio = text("Arábica • bebida rio: consultando…", 17f, dark, true)
+        quoteConilon = text("Conilon • tipo 7/8: consultando…", 17f, dark, true)
         quoteCard.addView(quoteArabica)
-        quoteCard.addView(quoteConilon.apply { setPadding(0, dp(8), 0, 0) })
-        quoteUpdated = text("Fonte: Cotação do Café (indicador nacional informado como Cepea/Esalq)", 11f, muted)
+        quoteCard.addView(quoteArabicaRio.apply { setPadding(0, dp(9), 0, 0) })
+        quoteCard.addView(quoteConilon.apply { setPadding(0, dp(9), 0, 0) })
+        quoteUpdated = text("Fonte oficial: CCCV • Centro do Comércio de Café de Vitória", 11f, muted)
         quoteUpdated.setPadding(0, dp(10), 0, 0)
         quoteCard.addView(quoteUpdated)
         quoteStatus = text("Buscando preços pela internet…", 12f, muted)
@@ -106,7 +109,7 @@ class MainActivity : Activity() {
         val quoteButton = Button(this).apply {
             text = "Ver cotação e histórico"
             setOnClickListener {
-                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://www.cotacaodocafe.com/")))
+                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://www.cccv.org.br/cotacao/")))
             }
         }
         quoteCard.addView(quoteButton)
@@ -137,7 +140,7 @@ class MainActivity : Activity() {
         addCard(content, refresh, 16)
 
         content.addView(text(
-            "Clima: Open-Meteo. Cotações: indicador nacional de referência; o valor negociado pode variar por região, qualidade, classificação e negociação local.",
+            "Clima: Open-Meteo. Café: CCCV — preços de referência pagos no interior do Espírito Santo, sem ICMS e livres de Funrural; negociações locais podem variar.",
             11f, muted
         ).apply {
             gravity = Gravity.CENTER
@@ -147,38 +150,59 @@ class MainActivity : Activity() {
     }
 
     private fun refreshQuotes() {
-        quoteStatus.text = "Atualizando preços…"
+        quoteStatus.text = "Consultando a tabela oficial do CCCV…"
         thread {
             try {
-                val connection = (URL("https://www.cotacaodocafe.com/").openConnection() as HttpURLConnection)
-                connection.connectTimeout = 12000
-                connection.readTimeout = 12000
-                connection.setRequestProperty("User-Agent", "CafeClimaAndroid/1.0")
+                val connection = (URL("https://www.cccv.org.br/cotacao/").openConnection() as HttpURLConnection)
+                connection.connectTimeout = 15000
+                connection.readTimeout = 15000
+                connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android) AppleWebKit/537.36 Chrome/120 Mobile Safari/537.36")
+                connection.setRequestProperty("Accept", "text/html,application/xhtml+xml")
                 val raw = connection.inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
                 connection.disconnect()
-                val plain = if (android.os.Build.VERSION.SDK_INT >= 24) {
-                    Html.fromHtml(raw, Html.FROM_HTML_MODE_LEGACY).toString()
-                } else {
-                    @Suppress("DEPRECATION")
-                    Html.fromHtml(raw).toString()
-                }.replace('\u00a0', ' ')
-                val arabica = Regex("(?is)Arábica\\s*R\\x24\\s*([0-9.]+,[0-9]{2})").find(plain)?.groupValues?.get(1)
-                val conilon = Regex("(?is)Conilon\\s*R\\x24\\s*([0-9.]+,[0-9]{2})").find(plain)?.groupValues?.get(1)
-                val update = Regex("(?is)Atualizado\\s+Hoje\\s+às\\s+([0-9]{1,2}:[0-9]{2})").find(plain)?.groupValues?.get(1)
-                runOnUiThread {
-                    if (arabica != null && conilon != null) {
-                        quoteArabica.text = "Arábica  R$ $arabica"
-                        quoteConilon.text = "Conilon  R$ $conilon"
-                        quoteStatus.text = "Consulta realizada: ${update ?: "horário não informado"}"
-                    } else {
-                        quoteArabica.text = "Arábica: indisponível"
-                        quoteConilon.text = "Conilon: indisponível"
-                        quoteStatus.text = "A fonte não apresentou os valores em formato reconhecido. Toque em “Ver cotação e histórico”."
+
+                fun clean(value: String): String = Html.fromHtml(value, Html.FROM_HTML_MODE_LEGACY)
+                    .toString().replace('\u00a0', ' ').replace(Regex("\\s+"), " ").trim()
+
+                val monthMatch = Regex("(?is)Cotação do café referente ao mês de\\s*([^<\\n]+)").find(raw)
+                val monthYear = monthMatch?.groupValues?.get(1)?.let { clean(it).trim('.', ' ', '\\r') } ?: "mês atual"
+                val rowRegex = Regex("(?is)<tr\\b[^>]*>(.*?)</tr>")
+                val cellRegex = Regex("(?is)<t[dh]\\b[^>]*>(.*?)</t[dh]>")
+                val priceRegex = Regex("\\d{1,3}(?:\\.\\d{3})*,\\d{2}")
+                var latestDay: String? = null
+                var dura: String? = null
+                var rio: String? = null
+                var conilon: String? = null
+
+                for (row in rowRegex.findAll(raw)) {
+                    val cells = cellRegex.findAll(row.groupValues[1]).map { clean(it.groupValues[1]) }.toList()
+                    if (cells.size >= 4 && cells[0].matches(Regex("\\d{1,2}"))) {
+                        val p1 = priceRegex.find(cells[1])?.value
+                        val p2 = priceRegex.find(cells[2])?.value
+                        val p3 = priceRegex.find(cells[3])?.value
+                        if (p1 != null && p2 != null && p3 != null) {
+                            latestDay = cells[0]
+                            dura = p1
+                            rio = p2
+                            conilon = p3
+                        }
                     }
+                }
+
+                if (latestDay == null || dura == null || rio == null || conilon == null) {
+                    throw IllegalStateException("A tabela diária do CCCV não retornou as três referências.")
+                }
+
+                runOnUiThread {
+                    quoteArabica.text = "Arábica • bebida dura   R$ $dura"
+                    quoteArabicaRio.text = "Arábica • bebida rio   R$ $rio"
+                    quoteConilon.text = "Conilon • tipo 7/8   R$ $conilon"
+                    quoteUpdated.text = "CCCV • saca de 60 kg • $latestDay de $monthYear"
+                    quoteStatus.text = "Valores oficiais publicados pelo CCCV. Atualizado ao consultar a página."
                 }
             } catch (e: Exception) {
                 runOnUiThread {
-                    quoteStatus.text = "Sem conexão para atualizar as cotações. Tente novamente."
+                    quoteStatus.text = "Não foi possível ler a tabela do CCCV agora. Verifique a internet e tente novamente."
                 }
             }
         }
