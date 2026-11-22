@@ -18,6 +18,8 @@ import android.widget.*
 import android.content.Intent
 import android.net.Uri
 import android.text.Html
+import android.util.Xml
+import org.xmlpull.v1.XmlPullParser
 import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
@@ -43,6 +45,10 @@ class MainActivity : Activity() {
     private lateinit var quoteArabicaRio: TextView
     private lateinit var quoteConilon: TextView
     private lateinit var quoteUpdated: TextView
+    private lateinit var dollarValue: TextView
+    private lateinit var dollarStatus: TextView
+    private lateinit var newsBox: LinearLayout
+    private lateinit var newsStatus: TextView
     private var locationManager: LocationManager? = null
     private val locationPermissionRequest = 1001
 
@@ -50,6 +56,8 @@ class MainActivity : Activity() {
         super.onCreate(savedInstanceState)
         buildScreen()
         refreshQuotes()
+        refreshDollar()
+        refreshCoffeeNews()
         requestWeatherLocation()
     }
 
@@ -146,6 +154,29 @@ class MainActivity : Activity() {
         quoteCard.addView(quoteButton)
         addCard(content, quoteCard, 10)
 
+        val dollarCard = card()
+        dollarCard.addView(text("💵  DÓLAR COMERCIAL", 17f, green, true))
+        dollarCard.addView(text("Referência USD/BRL • mercado financeiro", 12f, muted).apply {
+            setPadding(0, dp(4), 0, dp(10))
+        })
+        dollarValue = text("Consultando dólar…", 25f, dark, true)
+        dollarCard.addView(dollarValue)
+        dollarStatus = text("Buscando cotação atualizada…", 11f, muted)
+        dollarStatus.setPadding(0, dp(6), 0, 0)
+        dollarCard.addView(dollarStatus)
+        addCard(content, dollarCard)
+
+        val newsCard = card()
+        newsCard.addView(text("📰  NOTÍCIAS DO CAFÉ", 17f, green, true))
+        newsCard.addView(text("Últimas notícias sobre arábica, conilon e mercado", 12f, muted).apply {
+            setPadding(0, dp(4), 0, dp(10))
+        })
+        newsStatus = text("Carregando notícias…", 12f, muted)
+        newsCard.addView(newsStatus)
+        newsBox = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        newsCard.addView(newsBox)
+        addCard(content, newsCard)
+
         val weatherCard = card()
         weatherCard.addView(text("🌦️  CLIMA NA SUA LOCALIZAÇÃO", 17f, green, true).apply { letterSpacing = 0.02f })
         weatherStatus = text("Obtendo localização do celular…", 13f, muted)
@@ -166,6 +197,8 @@ class MainActivity : Activity() {
             styleButton(this)
             setOnClickListener {
                 refreshQuotes()
+                refreshDollar()
+                refreshCoffeeNews()
                 requestWeatherLocation()
             }
         }
@@ -235,6 +268,128 @@ class MainActivity : Activity() {
             } catch (e: Exception) {
                 runOnUiThread {
                     quoteStatus.text = "Não foi possível ler a tabela do CCCV agora. Verifique a internet e tente novamente."
+                }
+            }
+        }
+    }
+
+
+    private fun refreshDollar() {
+        dollarStatus.text = "Consultando dólar comercial…"
+        thread {
+            try {
+                val connection = URL("https://economia.awesomeapi.com.br/json/last/USD-BRL").openConnection() as HttpURLConnection
+                connection.connectTimeout = 12000
+                connection.readTimeout = 12000
+                connection.setRequestProperty("User-Agent", "CafeEClima/2.1 Android")
+                val response = connection.inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
+                connection.disconnect()
+                val quote = JSONObject(response).getJSONObject("USDBRL")
+                val bid = quote.getString("bid").toDouble()
+                val change = quote.optString("pctChange", "0").toDoubleOrNull() ?: 0.0
+                val updated = quote.optString("create_date", "")
+                val price = "R$ " + String.format(Locale("pt", "BR"), "%.4f", bid)
+                val variation = String.format(Locale("pt", "BR"), "%+.2f%%", change)
+                runOnUiThread {
+                    dollarValue.text = price
+                    dollarStatus.text = "Variação: $variation" + if (updated.isNotBlank()) "  •  $updated" else ""
+                }
+            } catch (_: Exception) {
+                runOnUiThread {
+                    dollarValue.text = "Cotação indisponível"
+                    dollarStatus.text = "Não foi possível consultar o dólar agora. Tente atualizar."
+                }
+            }
+        }
+    }
+
+    private data class CoffeeNewsItem(val title: String, val link: String, val date: String)
+
+    private fun refreshCoffeeNews() {
+        newsStatus.text = "Buscando notícias recentes…"
+        newsBox.removeAllViews()
+        thread {
+            try {
+                val address = "https://news.google.com/rss/search?q=caf%C3%A9+%28conilon+OR+ar%C3%A1bica+OR+mercado%29&hl=pt-BR&gl=BR&ceid=BR%3Apt-419"
+                val connection = URL(address).openConnection() as HttpURLConnection
+                connection.connectTimeout = 15000
+                connection.readTimeout = 15000
+                connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Android) CafeEClima/2.1")
+                val stream = connection.inputStream
+                val parser = Xml.newPullParser()
+                parser.setInput(stream, "UTF-8")
+                val items = mutableListOf<CoffeeNewsItem>()
+                var event = parser.eventType
+                var insideItem = false
+                var tag = ""
+                var title = ""
+                var link = ""
+                var date = ""
+                while (event != XmlPullParser.END_DOCUMENT && items.size < 8) {
+                    when (event) {
+                        XmlPullParser.START_TAG -> {
+                            tag = parser.name
+                            if (tag == "item") {
+                                insideItem = true
+                                title = ""
+                                link = ""
+                                date = ""
+                            }
+                        }
+                        XmlPullParser.TEXT -> if (insideItem) {
+                            when (tag) {
+                                "title" -> title += parser.text
+                                "link" -> link += parser.text
+                                "pubDate" -> date += parser.text
+                            }
+                        }
+                        XmlPullParser.END_TAG -> {
+                            if (parser.name == "item") {
+                                if (title.isNotBlank() && link.isNotBlank()) {
+                                    items.add(CoffeeNewsItem(title.trim(), link.trim(), date.trim()))
+                                }
+                                insideItem = false
+                            }
+                            tag = ""
+                        }
+                    }
+                    event = parser.next()
+                }
+                stream.close()
+                connection.disconnect()
+                runOnUiThread {
+                    newsBox.removeAllViews()
+                    if (items.isEmpty()) {
+                        newsStatus.text = "Nenhuma notícia disponível no momento."
+                    } else {
+                        newsStatus.text = "Feed de notícias • Google Notícias"
+                        items.forEachIndexed { index, entryItem ->
+                            val entry = text("•  ${entryItem.title}", 14f, dark, true).apply {
+                                setPadding(0, dp(10), 0, dp(4))
+                                isClickable = true
+                                setOnClickListener {
+                                    startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(entryItem.link)))
+                                }
+                            }
+                            newsBox.addView(entry)
+                            if (entryItem.date.isNotBlank()) {
+                                newsBox.addView(text(entryItem.date, 10f, muted))
+                            }
+                            if (index < items.lastIndex) {
+                                val line = View(this).apply {
+                                    setBackgroundColor(panelBorder)
+                                    layoutParams = LinearLayout.LayoutParams(-1, dp(1)).apply {
+                                        topMargin = dp(8)
+                                    }
+                                }
+                                newsBox.addView(line)
+                            }
+                        }
+                    }
+                }
+            } catch (_: Exception) {
+                runOnUiThread {
+                    newsStatus.text = "Não foi possível carregar as notícias. Confira a internet e tente novamente."
                 }
             }
         }
