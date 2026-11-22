@@ -10,6 +10,8 @@ import android.location.LocationListener
 import android.location.LocationManager
 import android.graphics.Color
 import android.graphics.Typeface
+import android.graphics.drawable.GradientDrawable
+import android.content.res.ColorStateList
 import android.view.Gravity
 import android.view.View
 import android.widget.*
@@ -24,10 +26,14 @@ import java.util.Locale
 import kotlin.concurrent.thread
 
 class MainActivity : Activity() {
-    private val green = Color.rgb(38, 91, 57)
-    private val dark = Color.rgb(34, 48, 39)
-    private val muted = Color.rgb(104, 119, 108)
-    private val pageBackground = Color.rgb(242, 246, 239)
+    // Tema Café & Clima: verde floresta, carvão e detalhes em lima/dourado
+    private val green = Color.rgb(177, 213, 83)
+    private val dark = Color.rgb(244, 246, 237)
+    private val muted = Color.rgb(174, 187, 170)
+    private val pageBackground = Color.rgb(13, 24, 18)
+    private val panel = Color.rgb(25, 40, 31)
+    private val panelBorder = Color.rgb(54, 76, 57)
+    private val gold = Color.rgb(220, 174, 75)
     private lateinit var content: LinearLayout
     private lateinit var quoteStatus: TextView
     private lateinit var weatherStatus: TextView
@@ -58,12 +64,30 @@ class MainActivity : Activity() {
         }
     }
 
+    private fun roundedBackground(color: Int, stroke: Int = panelBorder, radius: Int = 18): GradientDrawable {
+        return GradientDrawable().apply {
+            setColor(color)
+            cornerRadius = dp(radius).toFloat()
+            setStroke(dp(1), stroke)
+        }
+    }
+
+    private fun styleButton(button: Button) {
+        button.setTextColor(Color.rgb(18, 29, 20))
+        button.textSize = 14f
+        button.typeface = Typeface.DEFAULT_BOLD
+        button.background = roundedBackground(green, green, 14)
+        button.backgroundTintList = ColorStateList.valueOf(green)
+        button.setPadding(dp(14), dp(10), dp(14), dp(10))
+        button.elevation = dp(3).toFloat()
+    }
+
     private fun card(): LinearLayout {
         return LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(dp(18), dp(16), dp(18), dp(16))
-            setBackgroundColor(Color.WHITE)
-            elevation = dp(2).toFloat()
+            setPadding(dp(18), dp(18), dp(18), dp(18))
+            background = roundedBackground(panel)
+            elevation = dp(3).toFloat()
         }
     }
 
@@ -74,6 +98,9 @@ class MainActivity : Activity() {
     }
 
     private fun buildScreen() {
+        window.statusBarColor = pageBackground
+        window.navigationBarColor = pageBackground
+        window.decorView.systemUiVisibility = 0
         val scroll = ScrollView(this).apply { setBackgroundColor(pageBackground) }
         content = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
@@ -81,16 +108,19 @@ class MainActivity : Activity() {
         }
         scroll.addView(content)
 
-        content.addView(text("☕ Café & Clima", 28f, green, true).apply {
+        content.addView(text("☕  CAFÉ & CLIMA", 25f, dark, true).apply {
             gravity = Gravity.CENTER
+            letterSpacing = 0.04f
+            setPadding(0, dp(8), 0, dp(2))
         })
-        content.addView(text("Mercado do café e clima na sua região", 14f, muted).apply {
+        content.addView(text("MERCADO DO CAFÉ  •  CLIMA NA SUA REGIÃO", 10f, green, true).apply {
             gravity = Gravity.CENTER
-            setPadding(0, dp(5), 0, dp(12))
+            letterSpacing = 0.08f
+            setPadding(0, dp(5), 0, dp(18))
         })
 
         val quoteCard = card()
-        quoteCard.addView(text("📈  COTAÇÃO DO CAFÉ", 17f, green, true))
+        quoteCard.addView(text("📈  COTAÇÃO DO CAFÉ", 17f, green, true).apply { letterSpacing = 0.03f })
         quoteCard.addView(text("Indicadores nacionais • saca de 60 kg", 12f, muted).apply {
             setPadding(0, dp(4), 0, dp(12))
         })
@@ -107,7 +137,8 @@ class MainActivity : Activity() {
         quoteStatus.setPadding(0, dp(6), 0, 0)
         quoteCard.addView(quoteStatus)
         val quoteButton = Button(this).apply {
-            text = "Ver cotação e histórico"
+            text = "VER COTAÇÃO NO CCCV  ↗"
+            styleButton(this)
             setOnClickListener {
                 startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://www.cccv.org.br/cotacao/")))
             }
@@ -116,7 +147,7 @@ class MainActivity : Activity() {
         addCard(content, quoteCard, 10)
 
         val weatherCard = card()
-        weatherCard.addView(text("🌦️  CLIMA NA SUA LOCALIZAÇÃO", 17f, green, true))
+        weatherCard.addView(text("🌦️  CLIMA NA SUA LOCALIZAÇÃO", 17f, green, true).apply { letterSpacing = 0.02f })
         weatherStatus = text("Obtendo localização do celular…", 13f, muted)
         weatherStatus.setPadding(0, dp(5), 0, dp(8))
         weatherCard.addView(weatherStatus)
@@ -131,7 +162,8 @@ class MainActivity : Activity() {
         addCard(content, weatherCard)
 
         val refresh = Button(this).apply {
-            text = "↻  Atualizar cotações e previsão"
+            text = "↻  ATUALIZAR COTAÇÕES E PREVISÃO"
+            styleButton(this)
             setOnClickListener {
                 refreshQuotes()
                 requestWeatherLocation()
