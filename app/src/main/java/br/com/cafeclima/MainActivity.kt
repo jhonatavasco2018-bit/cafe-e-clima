@@ -109,91 +109,127 @@ class MainActivity : Activity() {
         window.statusBarColor = pageBackground
         window.navigationBarColor = pageBackground
         window.decorView.systemUiVisibility = 0
-        val scroll = ScrollView(this).apply { setBackgroundColor(pageBackground) }
+
+        val scroll = ScrollView(this).apply {
+            setBackgroundColor(pageBackground)
+            isFillViewport = true
+        }
         content = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(dp(18), dp(20), dp(18), dp(28))
+            setPadding(dp(16), dp(18), dp(16), dp(26))
         }
         scroll.addView(content)
 
-        content.addView(text("☕  CAFÉ & CLIMA", 25f, dark, true).apply {
+        // Cabeçalho do painel
+        val header = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER
-            letterSpacing = 0.04f
-            setPadding(0, dp(8), 0, dp(2))
+            setPadding(dp(8), dp(8), dp(8), dp(18))
+        }
+        header.addView(text("☕", 34f, dark).apply { gravity = Gravity.CENTER })
+        header.addView(text("CAFÉ & CLIMA", 25f, dark, true).apply {
+            gravity = Gravity.CENTER
+            letterSpacing = 0.06f
+            setPadding(0, dp(2), 0, dp(3))
         })
-        content.addView(text("MERCADO DO CAFÉ  •  CLIMA NA SUA REGIÃO", 10f, green, true).apply {
+        header.addView(text("MERCADO • CLIMA • DÓLAR • NOTÍCIAS", 10f, green, true).apply {
             gravity = Gravity.CENTER
             letterSpacing = 0.08f
-            setPadding(0, dp(5), 0, dp(18))
         })
+        content.addView(header)
 
+        // Mercado: cotações em um cartão de destaque
+        content.addView(text("MERCADO DO CAFÉ", 13f, muted, true).apply {
+            letterSpacing = 0.08f
+            setPadding(dp(3), dp(4), 0, dp(2))
+        })
         val quoteCard = card()
-        quoteCard.addView(text("📈  COTAÇÃO DO CAFÉ", 17f, green, true).apply { letterSpacing = 0.03f })
-        quoteCard.addView(text("Indicadores nacionais • saca de 60 kg", 12f, muted).apply {
+        quoteCard.setPadding(dp(16), dp(16), dp(16), dp(16))
+        quoteCard.addView(text("📈  COTAÇÕES DO CAFÉ", 17f, green, true))
+        quoteCard.addView(text("Referências nacionais • saca de 60 kg", 12f, muted).apply {
             setPadding(0, dp(4), 0, dp(12))
         })
-        quoteArabica = text("Arábica • bebida dura: consultando…", 17f, dark, true)
-        quoteArabicaRio = text("Arábica • bebida rio: consultando…", 17f, dark, true)
-        quoteConilon = text("Conilon • tipo 7/8: consultando…", 17f, dark, true)
+        quoteArabica = text("Arábica • bebida dura: consultando…", 15f, dark, true)
+        quoteArabicaRio = text("Arábica • bebida rio: consultando…", 15f, dark, true)
+        quoteConilon = text("Conilon • tipo 7/8: consultando…", 15f, dark, true)
         quoteCard.addView(quoteArabica)
         quoteCard.addView(quoteArabicaRio.apply { setPadding(0, dp(9), 0, 0) })
         quoteCard.addView(quoteConilon.apply { setPadding(0, dp(9), 0, 0) })
-        quoteUpdated = text("Fonte oficial: CCCV • Centro do Comércio de Café de Vitória", 11f, muted)
+        quoteUpdated = text("CCCV • preços de referência", 11f, muted)
         quoteUpdated.setPadding(0, dp(10), 0, 0)
         quoteCard.addView(quoteUpdated)
-        quoteStatus = text("Buscando preços pela internet…", 12f, muted)
-        quoteStatus.setPadding(0, dp(6), 0, 0)
+        quoteStatus = text("Buscando preços atualizados…", 11f, muted)
+        quoteStatus.setPadding(0, dp(5), 0, dp(10))
         quoteCard.addView(quoteStatus)
         val quoteButton = Button(this).apply {
-            text = "VER COTAÇÃO NO CCCV  ↗"
+            text = "CONSULTAR CCCV  ↗"
             styleButton(this)
             setOnClickListener {
                 startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://www.cccv.org.br/cotacao/")))
             }
         }
         quoteCard.addView(quoteButton)
-        addCard(content, quoteCard, 10)
+        addCard(content, quoteCard, 6)
 
+        // Dólar em cartão mais compacto
         val dollarCard = card()
-        dollarCard.addView(text("💵  DÓLAR COMERCIAL", 17f, green, true))
-        dollarCard.addView(text("Referência USD/BRL • mercado financeiro", 12f, muted).apply {
-            setPadding(0, dp(4), 0, dp(10))
-        })
-        dollarValue = text("Consultando dólar…", 25f, dark, true)
+        dollarCard.setPadding(dp(16), dp(14), dp(16), dp(14))
+        val dollarHeader = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+        }
+        dollarHeader.addView(text("💵  DÓLAR COMERCIAL", 16f, green, true), LinearLayout.LayoutParams(0, -2, 1f))
+        dollarHeader.addView(text("USD / BRL", 10f, muted, true))
+        dollarCard.addView(dollarHeader)
+        dollarValue = text("Consultando dólar…", 27f, dark, true)
+        dollarValue.setPadding(0, dp(8), 0, dp(1))
         dollarCard.addView(dollarValue)
         dollarStatus = text("Buscando cotação atualizada…", 11f, muted)
-        dollarStatus.setPadding(0, dp(6), 0, 0)
+        dollarStatus.setPadding(0, dp(2), 0, 0)
         dollarCard.addView(dollarStatus)
-        addCard(content, dollarCard)
+        addCard(content, dollarCard, 10)
 
-        val newsCard = card()
-        newsCard.addView(text("📰  NOTÍCIAS DO CAFÉ", 17f, green, true))
-        newsCard.addView(text("Últimas notícias sobre arábica, conilon e mercado", 12f, muted).apply {
-            setPadding(0, dp(4), 0, dp(10))
+        // Clima ganha destaque visual e vem antes das notícias
+        content.addView(text("TEMPO NA SUA REGIÃO", 13f, muted, true).apply {
+            letterSpacing = 0.08f
+            setPadding(dp(3), dp(18), 0, dp(2))
         })
-        newsStatus = text("Carregando notícias…", 12f, muted)
-        newsCard.addView(newsStatus)
-        newsBox = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-        newsCard.addView(newsBox)
-        addCard(content, newsCard)
-
         val weatherCard = card()
-        weatherCard.addView(text("🌦️  CLIMA NA SUA LOCALIZAÇÃO", 17f, green, true).apply { letterSpacing = 0.02f })
-        weatherStatus = text("Obtendo localização do celular…", 13f, muted)
-        weatherStatus.setPadding(0, dp(5), 0, dp(8))
+        weatherCard.setPadding(dp(16), dp(16), dp(16), dp(16))
+        weatherCard.addView(text("🌦️  CLIMA NA SUA LOCALIZAÇÃO", 17f, green, true))
+        weatherStatus = text("Obtendo localização do celular…", 11f, muted)
+        weatherStatus.setPadding(0, dp(5), 0, dp(10))
         weatherCard.addView(weatherStatus)
         currentWeather = text("Aguardando previsão…", 16f, dark)
+        currentWeather.setLineSpacing(dp(3).toFloat(), 1f)
         currentWeather.setPadding(0, 0, 0, dp(12))
         weatherCard.addView(currentWeather)
-        weatherCard.addView(text("PRÓXIMOS 7 DIAS", 14f, green, true).apply {
+        weatherCard.addView(text("PRÓXIMOS 7 DIAS", 13f, green, true).apply {
             setPadding(0, dp(4), 0, dp(8))
         })
         forecastBox = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         weatherCard.addView(forecastBox)
-        addCard(content, weatherCard)
+        addCard(content, weatherCard, 6)
+
+        // Notícias em cartão separado, com manchetes clicáveis
+        content.addView(text("FIQUE POR DENTRO", 13f, muted, true).apply {
+            letterSpacing = 0.08f
+            setPadding(dp(3), dp(18), 0, dp(2))
+        })
+        val newsCard = card()
+        newsCard.setPadding(dp(16), dp(16), dp(16), dp(16))
+        newsCard.addView(text("📰  NOTÍCIAS DO CAFÉ", 17f, green, true))
+        newsCard.addView(text("Arábica, conilon e mercado", 12f, muted).apply {
+            setPadding(0, dp(4), 0, dp(8))
+        })
+        newsStatus = text("Carregando notícias…", 11f, muted)
+        newsCard.addView(newsStatus)
+        newsBox = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        newsCard.addView(newsBox)
+        addCard(content, newsCard, 6)
 
         val refresh = Button(this).apply {
-            text = "↻  ATUALIZAR COTAÇÕES E PREVISÃO"
+            text = "↻  ATUALIZAR INFORMAÇÕES"
             styleButton(this)
             setOnClickListener {
                 refreshQuotes()
@@ -205,11 +241,11 @@ class MainActivity : Activity() {
         addCard(content, refresh, 16)
 
         content.addView(text(
-            "Clima: Open-Meteo. Café: CCCV — preços de referência pagos no interior do Espírito Santo, sem ICMS e livres de Funrural; negociações locais podem variar.",
-            11f, muted
+            "Fontes: CCCV • Open-Meteo • Google Notícias • cotação USD/BRL. Preços do café são referências e negociações locais podem variar.",
+            10f, muted
         ).apply {
             gravity = Gravity.CENTER
-            setPadding(dp(4), dp(18), dp(4), 0)
+            setPadding(dp(5), dp(16), dp(5), 0)
         })
         setContentView(scroll)
     }
