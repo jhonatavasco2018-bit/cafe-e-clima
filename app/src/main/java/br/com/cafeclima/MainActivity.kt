@@ -165,7 +165,7 @@ class MainActivity : Activity() {
                     .toString().replace('\u00a0', ' ').replace(Regex("\\s+"), " ").trim()
 
                 val monthMatch = Regex("(?is)Cotação do café referente ao mês de\\s*([^<\\n]+)").find(raw)
-                val monthYear = monthMatch?.groupValues?.get(1)?.let { clean(it).trim('.', ' ', '\\r') } ?: "mês atual"
+                val monthYear = monthMatch?.groupValues?.get(1)?.let { clean(it).trim('.', ' ', '\r') } ?: "mês atual"
                 val rowRegex = Regex("(?is)<tr\\b[^>]*>(.*?)</tr>")
                 val cellRegex = Regex("(?is)<t[dh]\\b[^>]*>(.*?)</t[dh]>")
                 val priceRegex = Regex("\\d{1,3}(?:\\.\\d{3})*,\\d{2}")
