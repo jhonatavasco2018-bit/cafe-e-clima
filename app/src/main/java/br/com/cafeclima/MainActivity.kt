@@ -310,10 +310,10 @@ class MainActivity : Activity() {
         quoteStatus = text("Buscando preços atualizados…", 10f, muted).apply { setPadding(0, dp(4), 0, 0) }
         quoteGroup.addView(quoteStatus)
         val quoteButton = Button(this).apply {
-            text = "VER TABELA COMPLETA DO CCCV  ↗"
+            text = "VER COTAÇÃO E HISTÓRICO COOABRIEL  ↗"
             styleButton(this)
             setOnClickListener {
-                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://www.cccv.org.br/cotacao/")))
+                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://cooabriel.coop.br/cotacao-do-dia")))
             }
         }
         val quoteButtonParams = LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(12) }
@@ -390,7 +390,7 @@ class MainActivity : Activity() {
         val refreshParams = LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(16) }
         content.addView(refresh, refreshParams)
         content.addView(text(
-            "Fontes: CCCV • Open-Meteo • Google Notícias • USD/BRL. Preços são referências e negociações locais podem variar.",
+            "Fontes: Cooabriel • Open-Meteo • Google Notícias • USD/BRL. Preços são referências e negociações locais podem variar.",
             10f, muted
         ).apply {
             gravity = Gravity.CENTER
@@ -430,64 +430,53 @@ class MainActivity : Activity() {
     }
 
     private fun refreshQuotes() {
-        quoteStatus.text = "Consultando a tabela oficial do CCCV…"
+        quoteStatus.text = "Consultando as cotações oficiais da Cooabriel…"
         thread {
             try {
-                val connection = (URL("https://www.cccv.org.br/cotacao/").openConnection() as HttpURLConnection)
+                val connection = URL("https://cooabriel.coop.br/cotacao-do-dia").openConnection() as HttpURLConnection
                 connection.connectTimeout = 15000
                 connection.readTimeout = 15000
-                connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android) AppleWebKit/537.36 Chrome/120 Mobile Safari/537.36")
-                connection.setRequestProperty("Accept", "text/html,application/xhtml+xml")
+                connection.setRequestProperty("User-Agent", "Mozilla/5.0 Android CafeEClima")
                 val raw = connection.inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
                 connection.disconnect()
-
-                fun clean(value: String): String = Html.fromHtml(value, Html.FROM_HTML_MODE_LEGACY)
-                    .toString().replace('\u00a0', ' ').replace(Regex("\\s+"), " ").trim()
-
-                val monthMatch = Regex("(?is)Cotação do café referente ao mês de\\s*([^<\\n]+)").find(raw)
-                val monthYear = monthMatch?.groupValues?.get(1)?.let { clean(it).trim('.', ' ', '\r') } ?: "mês atual"
-                val rowRegex = Regex("(?is)<tr\\b[^>]*>(.*?)</tr>")
-                val cellRegex = Regex("(?is)<t[dh]\\b[^>]*>(.*?)</t[dh]>")
+                fun clean(v: String) = Html.fromHtml(v, Html.FROM_HTML_MODE_LEGACY).toString().replace(Regex("\\s+"), " ").trim()
+                val rows = Regex("(?is)<tr\\b[^>]*>(.*?)</tr>")
+                val cellsRegex = Regex("(?is)<t[dh]\\b[^>]*>(.*?)</t[dh]>")
                 val priceRegex = Regex("\\d{1,3}(?:\\.\\d{3})*,\\d{2}")
-                var latestDay: String? = null
-                var dura: String? = null
-                var rio: String? = null
-                var conilon: String? = null
-
-                for (row in rowRegex.findAll(raw)) {
-                    val cells = cellRegex.findAll(row.groupValues[1]).map { clean(it.groupValues[1]) }.toList()
-                    if (cells.size >= 4 && cells[0].matches(Regex("\\d{1,2}"))) {
-                        val p1 = priceRegex.find(cells[1])?.value
-                        val p2 = priceRegex.find(cells[2])?.value
-                        val p3 = priceRegex.find(cells[3])?.value
-                        if (p1 != null && p2 != null && p3 != null) {
-                            latestDay = cells[0]
-                            dura = p1
-                            rio = p2
-                            conilon = p3
+                val prices = mutableMapOf<String, String>()
+                var date = ""
+                var hour = ""
+                for (row in rows.findAll(raw)) {
+                    val cells = cellsRegex.findAll(row.groupValues[1]).map { clean(it.groupValues[1]) }.toList()
+                    if (cells.size >= 4) {
+                        val kind = cells[0].lowercase(Locale.ROOT)
+                        val price = priceRegex.find(cells.last())?.value
+                        if (kind.contains("conilon") && price != null) {
+                            when {
+                                kind.contains("7/8") -> prices["78"] = price
+                                kind.contains("escolha") -> prices["escolha"] = price
+                                kind.contains("conilon 7") -> prices["7"] = price
+                                kind.contains("conilon 8") -> prices["8"] = price
+                            }
+                            if (date.isBlank()) date = cells[1]
+                            if (hour.isBlank()) hour = cells[2]
                         }
                     }
                 }
-
-                if (latestDay == null || dura == null || rio == null || conilon == null) {
-                    throw IllegalStateException("A tabela diária do CCCV não retornou as três referências.")
-                }
-
+                if (listOf("7", "78", "8", "escolha").any { prices[it] == null }) throw IllegalStateException("Cooabriel sem todas as classificações")
                 runOnUiThread {
-                    quoteArabica.text = "R$ $dura"
-                    quoteArabicaRio.text = "R$ $rio"
-                    quoteConilon.text = "R$ $conilon"
-                    quoteUpdated.text = "CCCV • saca de 60 kg • $latestDay de $monthYear"
-                    quoteStatus.text = "Valores oficiais publicados pelo CCCV. Atualizado ao consultar a página."
+                    quoteArabica.text = "R$ " + prices["7"]
+                    quoteArabicaRio.text = "R$ " + prices["78"]
+                    quoteConilon.text = "R$ " + prices["8"]
+                    quoteEscolha.text = "R$ " + prices["escolha"]
+                    quoteUpdated.text = "Cooabriel • saca de 60 kg • " + date + " às " + hour
+                    quoteStatus.text = "Cotação oficial da cooperativa. Consulte o horário antes de negociar."
                 }
             } catch (e: Exception) {
-                runOnUiThread {
-                    quoteStatus.text = "Não foi possível ler a tabela do CCCV agora. Verifique a internet e tente novamente."
-                }
+                runOnUiThread { quoteStatus.text = "Não foi possível atualizar a cotação da Cooabriel. Tente novamente." }
             }
         }
     }
-
 
     private fun refreshDollar() {
         dollarStatus.text = "Consultando dólar comercial…"
