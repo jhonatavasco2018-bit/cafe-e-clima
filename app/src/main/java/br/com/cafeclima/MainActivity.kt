@@ -502,6 +502,17 @@ class MainActivity : Activity() {
         }
     }
 
+    private fun formatNewsDate(raw: String): String {
+        return try {
+            val input = SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss Z", Locale.US)
+            val parsed = input.parse(raw)
+            if (parsed != null) SimpleDateFormat("dd/MM/yyyy • HH:mm", Locale("pt", "BR")).format(parsed)
+            else raw
+        } catch (_: Exception) {
+            raw
+        }
+    }
+
     private data class CoffeeNewsItem(val title: String, val link: String, val date: String)
 
     private fun refreshCoffeeNews() {
@@ -572,7 +583,7 @@ class MainActivity : Activity() {
                             }
                             newsBox.addView(entry)
                             if (entryItem.date.isNotBlank()) {
-                                newsBox.addView(text(entryItem.date, 10f, muted))
+                                newsBox.addView(text(formatNewsDate(entryItem.date), 10f, muted))
                             }
                             if (index < items.lastIndex) {
                                 val line = View(this).apply {
@@ -680,7 +691,7 @@ class MainActivity : Activity() {
                         SimpleDateFormat("EEE dd/MM", Locale("pt", "BR")).format(parsed!!)
                     } catch (_: Exception) { dateRaw }
                     val desc = weatherDescription(codes.getInt(i))
-                    days.append("☀  $date   ${mins.getDouble(i).toInt()}° / ${maxs.getDouble(i).toInt()}°\n")
+                    days.append("${weatherEmoji(codes.getInt(i))}  $date   ${mins.getDouble(i).toInt()}° / ${maxs.getDouble(i).toInt()}°\n")
                     days.append("    $desc  •  Chuva: ${probs.optInt(i)}%  •  ${sums.getDouble(i).toInt()} mm\n")
                     if (i < times.length() - 1) days.append("\n")
                 }
