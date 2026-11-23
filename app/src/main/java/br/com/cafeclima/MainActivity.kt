@@ -9,12 +9,19 @@ import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
 import android.graphics.Color
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.Path
+import android.graphics.LinearGradient
+import android.graphics.Shader
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.content.res.ColorStateList
 import android.view.Gravity
 import android.view.View
 import android.widget.*
+import android.os.Handler
+import android.os.Looper as MainLooper
 import android.content.Intent
 import android.net.Uri
 import android.text.Html
@@ -121,6 +128,76 @@ class MainActivity : Activity() {
                 mainScroll.post { mainScroll.smoothScrollTo(0, target.top) }
             }
         }
+    }
+
+
+    private fun createSplashOverlay(): FrameLayout {
+        val overlay = FrameLayout(this).apply {
+            setBackgroundColor(Color.rgb(18, 34, 24))
+            isClickable = true
+        }
+        val landscape = object : View(this) {
+            private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+            override fun onDraw(canvas: Canvas) {
+                super.onDraw(canvas)
+                val w = width.toFloat()
+                val h = height.toFloat()
+                paint.shader = LinearGradient(0f, 0f, 0f, h,
+                    Color.rgb(35, 58, 42), Color.rgb(13, 25, 18), Shader.TileMode.CLAMP)
+                canvas.drawRect(0f, 0f, w, h, paint)
+                paint.shader = null
+                paint.color = Color.rgb(238, 178, 91)
+                canvas.drawCircle(w * .78f, h * .29f, w * .105f, paint)
+                val hill = Path().apply {
+                    moveTo(0f, h * .56f); quadTo(w * .35f, h * .38f, w * .62f, h * .57f)
+                    quadTo(w * .83f, h * .43f, w, h * .55f); lineTo(w, h); lineTo(0f, h); close()
+                }
+                paint.color = Color.rgb(42, 76, 48); canvas.drawPath(hill, paint)
+                val hill2 = Path().apply {
+                    moveTo(0f, h * .69f); quadTo(w * .45f, h * .50f, w, h * .68f)
+                    lineTo(w, h); lineTo(0f, h); close()
+                }
+                paint.color = Color.rgb(24, 53, 34); canvas.drawPath(hill2, paint)
+                for (row in 0..7) {
+                    val y = h * (.72f + row * .045f)
+                    for (col in -1..7) {
+                        val x = col * w / 6f + (row % 2) * w / 12f
+                        val radius = w * (.025f + row * .003f)
+                        paint.color = if ((row + col) % 2 == 0) Color.rgb(48, 91, 48) else Color.rgb(58, 103, 52)
+                        canvas.drawCircle(x, y, radius, paint)
+                        paint.color = Color.rgb(22, 48, 29)
+                        canvas.drawRect(x - radius * .22f, y, x + radius * .22f, h, paint)
+                    }
+                }
+            }
+        }
+        overlay.addView(landscape, FrameLayout.LayoutParams(-1, -1))
+        val shade = View(this).apply {
+            background = GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
+                intArrayOf(Color.argb(35, 5, 15, 8), Color.argb(150, 5, 15, 8)))
+        }
+        overlay.addView(shade, FrameLayout.LayoutParams(-1, -1))
+        val brand = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER
+            setPadding(dp(28), 0, dp(28), 0)
+        }
+        brand.addView(text("☕", 58f, gold, true).apply { gravity = Gravity.CENTER })
+        brand.addView(text("CAFÉ & CLIMA", 30f, Color.WHITE, true).apply {
+            gravity = Gravity.CENTER
+            letterSpacing = .08f
+            setPadding(0, dp(10), 0, dp(8))
+        })
+        brand.addView(text("O campo, o mercado e o tempo em um só lugar", 14f, Color.rgb(232, 224, 196)).apply {
+            gravity = Gravity.CENTER
+        })
+        brand.addView(text("MERCADO  •  CLIMA  •  DÓLAR", 11f, gold, true).apply {
+            gravity = Gravity.CENTER
+            setPadding(0, dp(22), 0, 0)
+            letterSpacing = .12f
+        })
+        overlay.addView(brand, FrameLayout.LayoutParams(-1, -1, Gravity.CENTER))
+        return overlay
     }
 
     private fun buildScreen() {
@@ -300,7 +377,14 @@ class MainActivity : Activity() {
         bottomBar.addView(navItem("💵\nDólar", dollarSection), LinearLayout.LayoutParams(0, dp(54), 1f))
         bottomBar.addView(navItem("📰\nNotícias", newsSection), LinearLayout.LayoutParams(0, dp(54), 1f))
         root.addView(bottomBar)
-        setContentView(root)
+        val appFrame = FrameLayout(this)
+        appFrame.addView(root, FrameLayout.LayoutParams(-1, -1))
+        val splash = createSplashOverlay()
+        appFrame.addView(splash, FrameLayout.LayoutParams(-1, -1))
+        setContentView(appFrame)
+        Handler(MainLooper.getMainLooper()).postDelayed({
+            if (splash.parent === appFrame) appFrame.removeView(splash)
+        }, 1900)
     }
 
     private fun refreshQuotes() {
