@@ -211,127 +211,167 @@ class MainActivity : Activity() {
         }
         content = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(dp(16), dp(18), dp(16), dp(26))
+            setPadding(dp(18), dp(14), dp(18), dp(24))
         }
         scroll.addView(content)
         mainScroll = scroll
+
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setBackgroundColor(pageBackground)
         }
         root.addView(scroll, LinearLayout.LayoutParams(-1, 0, 1f))
 
-        // Cabeçalho do painel
-        val header = LinearLayout(this).apply {
+        // Cabeçalho compacto com identidade visual do aplicativo
+        val hero = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER
-            setPadding(dp(8), dp(8), dp(8), dp(18))
+            setPadding(dp(18), dp(18), dp(18), dp(20))
+            background = roundedBackground(Color.rgb(21, 43, 29), panelBorder, 22)
         }
-        header.addView(text("☕", 34f, dark).apply { gravity = Gravity.CENTER })
-        header.addView(text("CAFÉ & CLIMA", 25f, dark, true).apply {
+        hero.addView(text("☕", 34f, gold, true).apply { gravity = Gravity.CENTER })
+        hero.addView(text("CAFÉ & CLIMA", 25f, dark, true).apply {
             gravity = Gravity.CENTER
-            letterSpacing = 0.06f
-            setPadding(0, dp(2), 0, dp(3))
+            letterSpacing = .07f
+            setPadding(0, dp(3), 0, dp(3))
         })
-        header.addView(text("MERCADO • CLIMA • DÓLAR • NOTÍCIAS", 10f, green, true).apply {
+        hero.addView(text("INFORMAÇÃO PARA QUEM VIVE O CAMPO", 10f, green, true).apply {
             gravity = Gravity.CENTER
-            letterSpacing = 0.08f
+            letterSpacing = .08f
         })
-        content.addView(header)
+        content.addView(hero)
 
-        // Mercado: cotações em um cartão de destaque
+        // Atalhos em grade logo abaixo do cabeçalho
+        val shortcutTitle = text("ACESSO RÁPIDO", 11f, muted, true).apply {
+            letterSpacing = .1f
+            setPadding(dp(2), dp(18), 0, dp(7))
+        }
+        content.addView(shortcutTitle)
+        val shortcutGrid = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        val shortcutRow1 = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        val shortcutRow2 = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        val shortcutStyle: (String, View) -> TextView = { label, target ->
+            navItem(label, target).apply {
+                textSize = 12f
+                background = roundedBackground(panel, panelBorder, 14)
+                setPadding(dp(6), dp(12), dp(6), dp(12))
+            }
+        }
+
+        // Cartões de mercado
         content.addView(text("MERCADO DO CAFÉ", 13f, muted, true).apply {
-            letterSpacing = 0.08f
-            setPadding(dp(3), dp(4), 0, dp(2))
+            letterSpacing = .1f
+            setPadding(dp(2), dp(20), 0, dp(8))
         })
-        val quoteCard = card()
-        quoteSection = quoteCard
-        quoteCard.setPadding(dp(16), dp(16), dp(16), dp(16))
-        quoteCard.addView(text("📈  COTAÇÕES DO CAFÉ", 17f, green, true))
-        quoteCard.addView(text("Referências nacionais • saca de 60 kg", 12f, muted).apply {
-            setPadding(0, dp(4), 0, dp(12))
+        val quoteGroup = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            background = roundedBackground(panel)
+            setPadding(dp(15), dp(15), dp(15), dp(15))
+        }
+        quoteSection = quoteGroup
+        quoteGroup.addView(text("📈  COTAÇÕES • SACA DE 60 KG", 15f, green, true))
+        quoteGroup.addView(text("Referências nacionais do CCCV", 11f, muted).apply {
+            setPadding(0, dp(3), 0, dp(12))
         })
-        quoteArabica = text("Arábica • bebida dura: consultando…", 15f, dark, true)
-        quoteArabicaRio = text("Arábica • bebida rio: consultando…", 15f, dark, true)
-        quoteConilon = text("Conilon • tipo 7/8: consultando…", 15f, dark, true)
-        quoteCard.addView(quoteArabica)
-        quoteCard.addView(quoteArabicaRio.apply { setPadding(0, dp(9), 0, 0) })
-        quoteCard.addView(quoteConilon.apply { setPadding(0, dp(9), 0, 0) })
-        quoteUpdated = text("CCCV • preços de referência", 11f, muted)
-        quoteUpdated.setPadding(0, dp(10), 0, 0)
-        quoteCard.addView(quoteUpdated)
-        quoteStatus = text("Buscando preços atualizados…", 11f, muted)
-        quoteStatus.setPadding(0, dp(5), 0, dp(10))
-        quoteCard.addView(quoteStatus)
+        val quoteRow1 = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        val arabicaCard = card().apply { setPadding(dp(12), dp(12), dp(12), dp(12)) }
+        arabicaCard.addView(text("☕ ARÁBICA • DURA", 10f, gold, true))
+        quoteArabica = text("Consultando…", 16f, dark, true).apply { setPadding(0, dp(7), 0, 0) }
+        arabicaCard.addView(quoteArabica)
+        val rioCard = card().apply { setPadding(dp(12), dp(12), dp(12), dp(12)) }
+        rioCard.addView(text("☕ ARÁBICA • RIO", 10f, gold, true))
+        quoteArabicaRio = text("Consultando…", 16f, dark, true).apply { setPadding(0, dp(7), 0, 0) }
+        rioCard.addView(quoteArabicaRio)
+        quoteRow1.addView(arabicaCard, LinearLayout.LayoutParams(0, -2, 1f).apply { marginEnd = dp(6) })
+        quoteRow1.addView(rioCard, LinearLayout.LayoutParams(0, -2, 1f).apply { marginStart = dp(6) })
+        quoteGroup.addView(quoteRow1)
+
+        val conilonCard = card().apply {
+            setPadding(dp(12), dp(11), dp(12), dp(11))
+            setBackgroundColor(Color.rgb(31, 51, 37))
+        }
+        val conilonRow = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+        }
+        conilonRow.addView(text("🌱 CONILON • TIPO 7/8", 12f, green, true), LinearLayout.LayoutParams(0, -2, 1f))
+        quoteConilon = text("Consultando…", 17f, dark, true)
+        conilonRow.addView(quoteConilon)
+        conilonCard.addView(conilonRow)
+        val conilonParams = LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(9) }
+        quoteGroup.addView(conilonCard, conilonParams)
+
+        quoteUpdated = text("CCCV • preços de referência", 10f, muted).apply { setPadding(0, dp(10), 0, 0) }
+        quoteGroup.addView(quoteUpdated)
+        quoteStatus = text("Buscando preços atualizados…", 10f, muted).apply { setPadding(0, dp(4), 0, 0) }
+        quoteGroup.addView(quoteStatus)
         val quoteButton = Button(this).apply {
-            text = "CONSULTAR CCCV  ↗"
+            text = "VER TABELA COMPLETA DO CCCV  ↗"
             styleButton(this)
             setOnClickListener {
                 startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://www.cccv.org.br/cotacao/")))
             }
         }
-        quoteCard.addView(quoteButton)
-        addCard(content, quoteCard, 6)
+        val quoteButtonParams = LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(12) }
+        quoteGroup.addView(quoteButton, quoteButtonParams)
+        addCard(content, quoteGroup, 0)
 
-        // Dólar em cartão mais compacto
-        val dollarCard = card()
+        // Dólar em cartão de leitura rápida
+        val dollarCard = card().apply { setPadding(dp(16), dp(14), dp(16), dp(14)) }
         dollarSection = dollarCard
-        dollarCard.setPadding(dp(16), dp(14), dp(16), dp(14))
         val dollarHeader = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
         }
-        dollarHeader.addView(text("💵  DÓLAR COMERCIAL", 16f, green, true), LinearLayout.LayoutParams(0, -2, 1f))
+        dollarHeader.addView(text("💵  DÓLAR COMERCIAL", 14f, green, true), LinearLayout.LayoutParams(0, -2, 1f))
         dollarHeader.addView(text("USD / BRL", 10f, muted, true))
         dollarCard.addView(dollarHeader)
-        dollarValue = text("Consultando dólar…", 27f, dark, true)
-        dollarValue.setPadding(0, dp(8), 0, dp(1))
+        dollarValue = text("Consultando…", 28f, dark, true).apply { setPadding(0, dp(5), 0, 0) }
         dollarCard.addView(dollarValue)
-        dollarStatus = text("Buscando cotação atualizada…", 11f, muted)
-        dollarStatus.setPadding(0, dp(2), 0, 0)
+        dollarStatus = text("Buscando cotação atualizada…", 10f, muted).apply { setPadding(0, dp(2), 0, 0) }
         dollarCard.addView(dollarStatus)
-        addCard(content, dollarCard, 10)
+        addCard(content, dollarCard, 12)
 
-        // Clima ganha destaque visual e vem antes das notícias
-        content.addView(text("TEMPO NA SUA REGIÃO", 13f, muted, true).apply {
-            letterSpacing = 0.08f
-            setPadding(dp(3), dp(18), 0, dp(2))
+        // Clima em destaque com leitura atual e previsão
+        content.addView(text("CLIMA NA SUA REGIÃO", 13f, muted, true).apply {
+            letterSpacing = .1f
+            setPadding(dp(2), dp(20), 0, dp(8))
         })
-        val weatherCard = card()
+        val weatherCard = card().apply { setPadding(dp(16), dp(16), dp(16), dp(16)) }
         weatherSection = weatherCard
-        weatherCard.setPadding(dp(16), dp(16), dp(16), dp(16))
-        weatherCard.addView(text("🌦️  CLIMA NA SUA LOCALIZAÇÃO", 17f, green, true))
-        weatherStatus = text("Obtendo localização do celular…", 11f, muted)
-        weatherStatus.setPadding(0, dp(5), 0, dp(10))
+        weatherCard.addView(text("🌦️  TEMPO AGORA", 15f, green, true))
+        weatherStatus = text("Obtendo localização do celular…", 10f, muted).apply {
+            setPadding(0, dp(4), 0, dp(10))
+        }
         weatherCard.addView(weatherStatus)
-        currentWeather = text("Aguardando previsão…", 16f, dark)
-        currentWeather.setLineSpacing(dp(3).toFloat(), 1f)
-        currentWeather.setPadding(0, 0, 0, dp(12))
+        currentWeather = text("Aguardando previsão…", 17f, dark, true).apply {
+            setLineSpacing(dp(3).toFloat(), 1f)
+            setPadding(0, 0, 0, dp(12))
+        }
         weatherCard.addView(currentWeather)
-        weatherCard.addView(text("PRÓXIMOS 7 DIAS", 13f, green, true).apply {
+        weatherCard.addView(text("PREVISÃO DOS PRÓXIMOS 7 DIAS", 11f, gold, true).apply {
             setPadding(0, dp(4), 0, dp(8))
         })
         forecastBox = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         weatherCard.addView(forecastBox)
-        addCard(content, weatherCard, 6)
+        addCard(content, weatherCard, 0)
 
-        // Notícias em cartão separado, com manchetes clicáveis
-        content.addView(text("FIQUE POR DENTRO", 13f, muted, true).apply {
-            letterSpacing = 0.08f
-            setPadding(dp(3), dp(18), 0, dp(2))
+        // Notícias com títulos clicáveis e separadores discretos
+        content.addView(text("NOTÍCIAS DO CAFÉ", 13f, muted, true).apply {
+            letterSpacing = .1f
+            setPadding(dp(2), dp(20), 0, dp(8))
         })
-        val newsCard = card()
+        val newsCard = card().apply { setPadding(dp(16), dp(15), dp(16), dp(15)) }
         newsSection = newsCard
-        newsCard.setPadding(dp(16), dp(16), dp(16), dp(16))
-        newsCard.addView(text("📰  NOTÍCIAS DO CAFÉ", 17f, green, true))
-        newsCard.addView(text("Arábica, conilon e mercado", 12f, muted).apply {
-            setPadding(0, dp(4), 0, dp(8))
+        newsCard.addView(text("📰  MERCADO E AGRICULTURA", 14f, green, true))
+        newsCard.addView(text("Últimas notícias sobre arábica, conilon e mercado", 11f, muted).apply {
+            setPadding(0, dp(3), 0, dp(8))
         })
-        newsStatus = text("Carregando notícias…", 11f, muted)
+        newsStatus = text("Carregando notícias…", 10f, muted)
         newsCard.addView(newsStatus)
         newsBox = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         newsCard.addView(newsBox)
-        addCard(content, newsCard, 6)
+        addCard(content, newsCard, 0)
 
         val refresh = Button(this).apply {
             text = "↻  ATUALIZAR INFORMAÇÕES"
@@ -343,40 +383,38 @@ class MainActivity : Activity() {
                 requestWeatherLocation()
             }
         }
-        addCard(content, refresh, 16)
-
+        val refreshParams = LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(16) }
+        content.addView(refresh, refreshParams)
         content.addView(text(
-            "Fontes: CCCV • Open-Meteo • Google Notícias • cotação USD/BRL. Preços do café são referências e negociações locais podem variar.",
+            "Fontes: CCCV • Open-Meteo • Google Notícias • USD/BRL. Preços são referências e negociações locais podem variar.",
             10f, muted
         ).apply {
             gravity = Gravity.CENTER
-            setPadding(dp(5), dp(16), dp(5), 0)
+            setPadding(dp(5), dp(14), dp(5), 0)
         })
 
-        // Atalhos rápidos para as áreas principais
-        val shortcuts = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER
-            setPadding(0, dp(10), 0, dp(4))
-        }
-        shortcuts.addView(navItem("☕ Café", quoteSection), LinearLayout.LayoutParams(0, dp(42), 1f))
-        shortcuts.addView(navItem("🌦 Clima", weatherSection), LinearLayout.LayoutParams(0, dp(42), 1f))
-        shortcuts.addView(navItem("💵 Dólar", dollarSection), LinearLayout.LayoutParams(0, dp(42), 1f))
-        shortcuts.addView(navItem("📰 Notícias", newsSection), LinearLayout.LayoutParams(0, dp(42), 1f))
-        content.addView(shortcuts, 1)
+        // Preenche os atalhos depois de criar todas as seções
+        shortcutRow1.addView(shortcutStyle("☕  MERCADO", quoteSection), LinearLayout.LayoutParams(0, dp(48), 1f).apply { marginEnd = dp(5) })
+        shortcutRow1.addView(shortcutStyle("🌦  CLIMA", weatherSection), LinearLayout.LayoutParams(0, dp(48), 1f).apply { marginStart = dp(5) })
+        shortcutRow2.addView(shortcutStyle("💵  DÓLAR", dollarSection), LinearLayout.LayoutParams(0, dp(48), 1f).apply { marginEnd = dp(5) })
+        shortcutRow2.addView(shortcutStyle("📰  NOTÍCIAS", newsSection), LinearLayout.LayoutParams(0, dp(48), 1f).apply { marginStart = dp(5) })
+        shortcutGrid.addView(shortcutRow1)
+        shortcutGrid.addView(shortcutRow2, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(8) })
+        content.addView(shortcutGrid, 2)
 
-        // Navegação fixa na parte inferior
+        // Barra de navegação inferior fixa
         val bottomBar = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER
-            setPadding(dp(8), dp(8), dp(8), dp(8))
+            setPadding(dp(8), dp(7), dp(8), dp(7))
             background = roundedBackground(panel, panelBorder, 0)
         }
-        bottomBar.addView(navItem("☕\nMercado", quoteSection), LinearLayout.LayoutParams(0, dp(54), 1f))
-        bottomBar.addView(navItem("🌦\nClima", weatherSection), LinearLayout.LayoutParams(0, dp(54), 1f))
-        bottomBar.addView(navItem("💵\nDólar", dollarSection), LinearLayout.LayoutParams(0, dp(54), 1f))
-        bottomBar.addView(navItem("📰\nNotícias", newsSection), LinearLayout.LayoutParams(0, dp(54), 1f))
+        bottomBar.addView(navItem("☕\nMercado", quoteSection), LinearLayout.LayoutParams(0, dp(52), 1f))
+        bottomBar.addView(navItem("🌦\nClima", weatherSection), LinearLayout.LayoutParams(0, dp(52), 1f))
+        bottomBar.addView(navItem("💵\nDólar", dollarSection), LinearLayout.LayoutParams(0, dp(52), 1f))
+        bottomBar.addView(navItem("📰\nNotícias", newsSection), LinearLayout.LayoutParams(0, dp(52), 1f))
         root.addView(bottomBar)
+
         val appFrame = FrameLayout(this)
         appFrame.addView(root, FrameLayout.LayoutParams(-1, -1))
         val splash = createSplashOverlay()
@@ -384,7 +422,7 @@ class MainActivity : Activity() {
         setContentView(appFrame)
         Handler(MainLooper.getMainLooper()).postDelayed({
             if (splash.parent === appFrame) appFrame.removeView(splash)
-        }, 1900)
+        }, 2400)
     }
 
     private fun refreshQuotes() {
