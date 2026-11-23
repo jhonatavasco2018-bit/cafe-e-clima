@@ -302,7 +302,6 @@ class MainActivity : Activity() {
         root.addView(bottomBar)
         setContentView(root)
     }
-    }
 
     private fun refreshQuotes() {
         quoteStatus.text = "Consultando a tabela oficial do CCCV…"
