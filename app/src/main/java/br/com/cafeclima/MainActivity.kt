@@ -56,7 +56,6 @@ class MainActivity : Activity() {
     private lateinit var quoteArabica: TextView
     private lateinit var quoteArabicaRio: TextView
     private lateinit var quoteConilon: TextView
-    private lateinit var quoteEscolha: TextView
     private lateinit var quoteUpdated: TextView
     private lateinit var dollarValue: TextView
     private lateinit var dollarStatus: TextView
@@ -271,7 +270,7 @@ class MainActivity : Activity() {
         }
         quoteSection = quoteGroup
         quoteGroup.addView(text("📈  COTAÇÕES • SACA DE 60 KG", 15f, green, true))
-        quoteGroup.addView(text("Referências nacionais do CCCV", 11f, muted).apply {
+        quoteGroup.addView(text("Cotações oficiais da Cooabriel", 11f, muted).apply {
             setPadding(0, dp(3), 0, dp(12))
         })
         val quoteRow1 = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
@@ -299,13 +298,10 @@ class MainActivity : Activity() {
         quoteConilon = text("Consultando…", 17f, dark, true)
         conilonRow.addView(quoteConilon)
         conilonCard.addView(conilonRow)
-        quoteEscolha = text("Consultando…", 15f, dark, true)
-        conilonCard.addView(text("ESCOLHA CONILON", 11f, muted, true))
-        conilonCard.addView(quoteEscolha)
         val conilonParams = LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(9) }
         quoteGroup.addView(conilonCard, conilonParams)
 
-        quoteUpdated = text("CCCV • preços de referência", 10f, muted).apply { setPadding(0, dp(10), 0, 0) }
+        quoteUpdated = text("Cooabriel • preços de referência", 10f, muted).apply { setPadding(0, dp(10), 0, 0) }
         quoteGroup.addView(quoteUpdated)
         quoteStatus = text("Buscando preços atualizados…", 10f, muted).apply { setPadding(0, dp(4), 0, 0) }
         quoteGroup.addView(quoteStatus)
@@ -463,12 +459,11 @@ class MainActivity : Activity() {
                         }
                     }
                 }
-                if (listOf("7", "78", "8", "escolha").any { prices[it] == null }) throw IllegalStateException("Cooabriel sem todas as classificações")
+                if (listOf("7", "78", "8").any { prices[it] == null }) throw IllegalStateException("Cooabriel sem todas as classificações")
                 runOnUiThread {
                     quoteArabica.text = "R$ " + prices["7"]
                     quoteArabicaRio.text = "R$ " + prices["78"]
                     quoteConilon.text = "R$ " + prices["8"]
-                    quoteEscolha.text = "R$ " + prices["escolha"]
                     quoteUpdated.text = "Cooabriel • saca de 60 kg • " + date + " às " + hour
                     quoteStatus.text = "Cotação oficial da cooperativa. Consulte o horário antes de negociar."
                 }
