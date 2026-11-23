@@ -470,9 +470,9 @@ class MainActivity : Activity() {
                 }
 
                 runOnUiThread {
-                    quoteArabica.text = "Arábica • bebida dura   R$ $dura"
-                    quoteArabicaRio.text = "Arábica • bebida rio   R$ $rio"
-                    quoteConilon.text = "Conilon • tipo 7/8   R$ $conilon"
+                    quoteArabica.text = "R$ $dura"
+                    quoteArabicaRio.text = "R$ $rio"
+                    quoteConilon.text = "R$ $conilon"
                     quoteUpdated.text = "CCCV • saca de 60 kg • $latestDay de $monthYear"
                     quoteStatus.text = "Valores oficiais publicados pelo CCCV. Atualizado ao consultar a página."
                 }
