@@ -56,6 +56,7 @@ class MainActivity : Activity() {
     private lateinit var quoteArabica: TextView
     private lateinit var quoteArabicaRio: TextView
     private lateinit var quoteConilon: TextView
+    private lateinit var quoteEscolha: TextView
     private lateinit var quoteUpdated: TextView
     private lateinit var dollarValue: TextView
     private lateinit var dollarStatus: TextView
@@ -275,11 +276,11 @@ class MainActivity : Activity() {
         })
         val quoteRow1 = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
         val arabicaCard = card().apply { setPadding(dp(12), dp(12), dp(12), dp(12)) }
-        arabicaCard.addView(text("☕ ARÁBICA • DURA", 10f, gold, true))
+        arabicaCard.addView(text("🌱 CONILON 7", 10f, gold, true))
         quoteArabica = text("Consultando…", 16f, dark, true).apply { setPadding(0, dp(7), 0, 0) }
         arabicaCard.addView(quoteArabica)
         val rioCard = card().apply { setPadding(dp(12), dp(12), dp(12), dp(12)) }
-        rioCard.addView(text("☕ ARÁBICA • RIO", 10f, gold, true))
+        rioCard.addView(text("🌱 CONILON 7/8", 10f, gold, true))
         quoteArabicaRio = text("Consultando…", 16f, dark, true).apply { setPadding(0, dp(7), 0, 0) }
         rioCard.addView(quoteArabicaRio)
         quoteRow1.addView(arabicaCard, LinearLayout.LayoutParams(0, -2, 1f).apply { marginEnd = dp(6) })
@@ -294,10 +295,13 @@ class MainActivity : Activity() {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
         }
-        conilonRow.addView(text("🌱 CONILON • TIPO 7/8", 12f, green, true), LinearLayout.LayoutParams(0, -2, 1f))
+        conilonRow.addView(text("🌱 CONILON 8", 12f, green, true), LinearLayout.LayoutParams(0, -2, 1f))
         quoteConilon = text("Consultando…", 17f, dark, true)
         conilonRow.addView(quoteConilon)
         conilonCard.addView(conilonRow)
+        quoteEscolha = text("Consultando…", 15f, dark, true)
+        conilonCard.addView(text("ESCOLHA CONILON", 11f, muted, true))
+        conilonCard.addView(quoteEscolha)
         val conilonParams = LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(9) }
         quoteGroup.addView(conilonCard, conilonParams)
 
