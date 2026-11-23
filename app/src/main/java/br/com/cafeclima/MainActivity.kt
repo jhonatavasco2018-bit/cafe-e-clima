@@ -37,6 +37,11 @@ class MainActivity : Activity() {
     private val panelBorder = Color.rgb(54, 76, 57)
     private val gold = Color.rgb(220, 174, 75)
     private lateinit var content: LinearLayout
+    private lateinit var mainScroll: ScrollView
+    private lateinit var quoteSection: View
+    private lateinit var dollarSection: View
+    private lateinit var weatherSection: View
+    private lateinit var newsSection: View
     private lateinit var quoteStatus: TextView
     private lateinit var weatherStatus: TextView
     private lateinit var currentWeather: TextView
@@ -105,6 +110,19 @@ class MainActivity : Activity() {
         parent.addView(child, params)
     }
 
+
+    private fun navItem(label: String, target: View): TextView {
+        return text(label, 11f, green, true).apply {
+            gravity = Gravity.CENTER
+            setPadding(dp(3), dp(4), dp(3), dp(4))
+            isClickable = true
+            background = roundedBackground(panel, panelBorder, 12)
+            setOnClickListener {
+                mainScroll.post { mainScroll.smoothScrollTo(0, target.top) }
+            }
+        }
+    }
+
     private fun buildScreen() {
         window.statusBarColor = pageBackground
         window.navigationBarColor = pageBackground
@@ -119,6 +137,12 @@ class MainActivity : Activity() {
             setPadding(dp(16), dp(18), dp(16), dp(26))
         }
         scroll.addView(content)
+        mainScroll = scroll
+        val root = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setBackgroundColor(pageBackground)
+        }
+        root.addView(scroll, LinearLayout.LayoutParams(-1, 0, 1f))
 
         // Cabeçalho do painel
         val header = LinearLayout(this).apply {
@@ -144,6 +168,7 @@ class MainActivity : Activity() {
             setPadding(dp(3), dp(4), 0, dp(2))
         })
         val quoteCard = card()
+        quoteSection = quoteCard
         quoteCard.setPadding(dp(16), dp(16), dp(16), dp(16))
         quoteCard.addView(text("📈  COTAÇÕES DO CAFÉ", 17f, green, true))
         quoteCard.addView(text("Referências nacionais • saca de 60 kg", 12f, muted).apply {
@@ -173,6 +198,7 @@ class MainActivity : Activity() {
 
         // Dólar em cartão mais compacto
         val dollarCard = card()
+        dollarSection = dollarCard
         dollarCard.setPadding(dp(16), dp(14), dp(16), dp(14))
         val dollarHeader = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
@@ -195,6 +221,7 @@ class MainActivity : Activity() {
             setPadding(dp(3), dp(18), 0, dp(2))
         })
         val weatherCard = card()
+        weatherSection = weatherCard
         weatherCard.setPadding(dp(16), dp(16), dp(16), dp(16))
         weatherCard.addView(text("🌦️  CLIMA NA SUA LOCALIZAÇÃO", 17f, green, true))
         weatherStatus = text("Obtendo localização do celular…", 11f, muted)
@@ -217,6 +244,7 @@ class MainActivity : Activity() {
             setPadding(dp(3), dp(18), 0, dp(2))
         })
         val newsCard = card()
+        newsSection = newsCard
         newsCard.setPadding(dp(16), dp(16), dp(16), dp(16))
         newsCard.addView(text("📰  NOTÍCIAS DO CAFÉ", 17f, green, true))
         newsCard.addView(text("Arábica, conilon e mercado", 12f, muted).apply {
@@ -247,7 +275,33 @@ class MainActivity : Activity() {
             gravity = Gravity.CENTER
             setPadding(dp(5), dp(16), dp(5), 0)
         })
-        setContentView(scroll)
+
+        // Atalhos rápidos para as áreas principais
+        val shortcuts = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER
+            setPadding(0, dp(10), 0, dp(4))
+        }
+        shortcuts.addView(navItem("☕ Café", quoteSection), LinearLayout.LayoutParams(0, dp(42), 1f))
+        shortcuts.addView(navItem("🌦 Clima", weatherSection), LinearLayout.LayoutParams(0, dp(42), 1f))
+        shortcuts.addView(navItem("💵 Dólar", dollarSection), LinearLayout.LayoutParams(0, dp(42), 1f))
+        shortcuts.addView(navItem("📰 Notícias", newsSection), LinearLayout.LayoutParams(0, dp(42), 1f))
+        content.addView(shortcuts, 1)
+
+        // Navegação fixa na parte inferior
+        val bottomBar = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER
+            setPadding(dp(8), dp(8), dp(8), dp(8))
+            background = roundedBackground(panel, panelBorder, 0)
+        }
+        bottomBar.addView(navItem("☕\nMercado", quoteSection), LinearLayout.LayoutParams(0, dp(54), 1f))
+        bottomBar.addView(navItem("🌦\nClima", weatherSection), LinearLayout.LayoutParams(0, dp(54), 1f))
+        bottomBar.addView(navItem("💵\nDólar", dollarSection), LinearLayout.LayoutParams(0, dp(54), 1f))
+        bottomBar.addView(navItem("📰\nNotícias", newsSection), LinearLayout.LayoutParams(0, dp(54), 1f))
+        root.addView(bottomBar)
+        setContentView(root)
+    }
     }
 
     private fun refreshQuotes() {
